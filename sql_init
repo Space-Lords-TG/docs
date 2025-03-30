@@ -1,0 +1,60 @@
+-- Создание таблицы players
+CREATE TABLE players (
+    id BIGINT PRIMARY KEY,
+    username VARCHAR(64) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Создание таблицы hulls
+CREATE TABLE hulls (
+    id INT PRIMARY KEY,
+    name VARCHAR(32) NOT NULL,
+    armor FLOAT NOT NULL,
+    max_shields FLOAT NOT NULL,
+    max_health FLOAT NOT NULL,
+    maneuver FLOAT NOT NULL,
+    power_score FLOAT NOT NULL
+);
+
+-- Создание таблицы guns
+CREATE TABLE guns (
+    id INT PRIMARY KEY,
+    name VARCHAR(32) NOT NULL,
+    damage FLOAT NOT NULL,
+    crit_rate FLOAT NOT NULL,
+    crit_damage FLOAT NOT NULL,
+    speed FLOAT NOT NULL,
+    power_score FLOAT NOT NULL
+);
+
+-- Создание таблицы ships
+CREATE TABLE ships (
+    id INT PRIMARY KEY,
+    player_id BIGINT NOT NULL,
+    hull_id INT NOT NULL,
+    gun_id INT NOT NULL,
+    health FLOAT NOT NULL,
+    shields FLOAT NOT NULL,
+    power_score FLOAT NOT NULL,
+    FOREIGN KEY (player_id) REFERENCES players(id),
+    FOREIGN KEY (hull_id) REFERENCES hulls(id),
+    FOREIGN KEY (gun_id) REFERENCES guns(id)
+);
+
+-- Заполнение таблицы guns
+INSERT INTO guns (id, name, damage, crit_rate, crit_damage, speed, power_score) VALUES
+(1, 'Равновесие', 100, 0.10, 2.0, 83.33, 100.0),
+(2, 'Вихрь', 85, 0.15, 1.5, 110, 100.1),
+(3, 'Громовержец', 110, 0.05, 2.5, 85, 99.8),
+(4, 'Снайпер', 80, 0.20, 3.0, 90, 100.8),
+(5, 'Штурмовик', 105, 0.08, 2.0, 80, 99.1),
+(6, 'Плазматрон', 90, 0.12, 2.2, 95, 100.0),
+(7, 'Ионный удар', 75, 0.18, 1.8, 110, 100.0);
+
+-- Заполнение таблицы hulls
+INSERT INTO hulls (id, name, armor, max_shields, max_health, maneuver, power_score) VALUES
+(1, 'Баланс', 30, 500, 400, 0.30, 13.93),
+(2, 'Стриж', 20, 450, 350, 0.50, 13.31),
+(3, 'Титан', 40, 600, 500, 0.15, 16.48),
+(4, 'Броневик', 35, 550, 450, 0.25, 15.53),
+(5, 'Фантом', 25, 500, 400, 0.40, 14.47);

@@ -1,60 +1,148 @@
--- Создание таблицы players
+-- Drop tables if they exist (in reverse order of dependencies)
+DROP TABLE IF EXISTS player_resources;
+DROP TABLE IF EXISTS arena_fights;
+DROP TABLE IF EXISTS ships;
+DROP TABLE IF EXISTS players_guns;
+DROP TABLE IF EXISTS players_hulls;
+DROP TABLE IF EXISTS gun_templates;
+DROP TABLE IF EXISTS hull_templates;
+DROP TABLE IF EXISTS players;
+
+-- Create tables
 CREATE TABLE players (
     id BIGINT PRIMARY KEY,
-    username VARCHAR(64) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    username VARCHAR(64),
+    created_at TIMESTAMP
 );
 
--- Создание таблицы hulls
-CREATE TABLE hulls (
+CREATE TABLE hull_templates (
     id INT PRIMARY KEY,
-    name VARCHAR(32) NOT NULL,
-    armor FLOAT NOT NULL,
-    max_shields FLOAT NOT NULL,
-    max_health FLOAT NOT NULL,
-    maneuver FLOAT NOT NULL,
-    power_score FLOAT NOT NULL
+    name VARCHAR(32),
+    base_armor FLOAT,
+    base_max_shields FLOAT,
+    base_max_health FLOAT,
+    base_maneuver FLOAT,
+    gain_armor FLOAT,
+    gain_max_shields FLOAT,
+    gain_max_health FLOAT,
+    gain_maneuver FLOAT
 );
 
--- Создание таблицы guns
-CREATE TABLE guns (
+CREATE TABLE gun_templates (
     id INT PRIMARY KEY,
-    name VARCHAR(32) NOT NULL,
-    damage FLOAT NOT NULL,
-    crit_rate FLOAT NOT NULL,
-    crit_damage FLOAT NOT NULL,
-    speed FLOAT NOT NULL,
-    power_score FLOAT NOT NULL
+    name VARCHAR(32),
+    base_damage FLOAT,
+    base_crit_rate FLOAT,
+    base_crit_damage FLOAT,
+    base_speed FLOAT,
+    gain_damage FLOAT,
+    gain_crit_rate FLOAT,
+    gain_crit_damage FLOAT,
+    gain_speed FLOAT
 );
 
--- Создание таблицы ships
+CREATE TABLE players_guns (
+    id SERIAL PRIMARY KEY,
+    player_id BIGINT REFERENCES players(id),
+    gun_id INT REFERENCES gun_templates(id),
+    current_level INT,
+    is_equipped BOOLEAN
+);
+
+CREATE TABLE players_hulls (
+    id SERIAL PRIMARY KEY,
+    player_id BIGINT REFERENCES players(id),
+    hull_id INT REFERENCES hull_templates(id),
+    current_level INT,
+    is_equipped BOOLEAN
+);
+
 CREATE TABLE ships (
     id INT PRIMARY KEY,
-    player_id BIGINT NOT NULL,
-    hull_id INT NOT NULL,
-    gun_id INT NOT NULL,
-    health FLOAT NOT NULL,
-    shields FLOAT NOT NULL,
-    power_score FLOAT NOT NULL,
-    FOREIGN KEY (player_id) REFERENCES players(id),
-    FOREIGN KEY (hull_id) REFERENCES hulls(id),
-    FOREIGN KEY (gun_id) REFERENCES guns(id)
+    player_id BIGINT REFERENCES players(id),
+    player_hull_id INT REFERENCES players_hulls(id),
+    player_gun_id INT REFERENCES players_guns(id),
+    health FLOAT,
+    shields FLOAT
 );
 
--- Заполнение таблицы guns
-INSERT INTO guns (id, name, damage, crit_rate, crit_damage, speed, power_score) VALUES
-(1, 'Равновесие', 100, 0.10, 2.0, 83.33, 100.0),
-(2, 'Вихрь', 85, 0.15, 1.5, 110, 100.1),
-(3, 'Громовержец', 110, 0.05, 2.5, 85, 99.8),
-(4, 'Снайпер', 80, 0.20, 3.0, 90, 100.8),
-(5, 'Штурмовик', 105, 0.08, 2.0, 80, 99.1),
-(6, 'Плазматрон', 90, 0.12, 2.2, 95, 100.0),
-(7, 'Ионный удар', 75, 0.18, 1.8, 110, 100.0);
+CREATE TABLE arena_fights (
+    id INT PRIMARY KEY,
+    player1_id BIGINT REFERENCES players(id),
+    player2_id BIGINT REFERENCES players(id),
+    result VARCHAR(10)
+);
 
--- Заполнение таблицы hulls
-INSERT INTO hulls (id, name, armor, max_shields, max_health, maneuver, power_score) VALUES
-(1, 'Баланс', 30, 500, 400, 0.30, 13.93),
-(2, 'Стриж', 20, 450, 350, 0.50, 13.31),
-(3, 'Титан', 40, 600, 500, 0.15, 16.48),
-(4, 'Броневик', 35, 550, 450, 0.25, 15.53),
-(5, 'Фантом', 25, 500, 400, 0.40, 14.47);
+CREATE TABLE player_resources (
+    id INT PRIMARY KEY,
+    player_id BIGINT REFERENCES players(id),
+    metals INT,
+    crystalls INT,
+    gas INT
+);
+
+-- Insert hull templates data (5 records)
+INSERT INTO hull_templates (id, name, base_armor, base_max_shields, base_max_health, base_maneuver, gain_armor, gain_max_shields, gain_max_health, gain_maneuver) VALUES
+(1, 'Баланс', 30, 500, 400, 0.3, 1.5, 25, 20, 0.005),
+(2, 'Стриж', 20, 450, 350, 0.5, 1.0, 20, 15, 0.01),
+(3, 'Титан', 40, 600, 500, 0.15, 2.0, 30, 25, 0.0025),
+(4, 'Броневик', 35, 550, 450, 0.25, 1.75, 28, 18, 0.004),
+(5, 'Фантом', 25, 500, 400, 0.4, 1.25, 30, 15, 0.008);
+
+-- Insert gun templates data (7 records - as per original data)
+INSERT INTO gun_templates (id, name, base_damage, base_crit_rate, base_crit_damage, base_speed, gain_damage, gain_crit_rate, gain_crit_damage, gain_speed) VALUES
+(1, 'Равновесие', 100, 0.10, 2.0, 83.33, 5, 0.005, 0.05, 2),
+(2, 'Вихрь', 85, 0.15, 1.5, 110, 3, 0.0075, 0.03, 5),
+(3, 'Громовержец', 110, 0.05, 2.5, 85, 6, 0.0025, 0.1, 3),
+(4, 'Снайпер', 80, 0.20, 3.0, 90, 4, 0.01, 0.15, 1),
+(5, 'Штурмовик', 105, 0.08, 2.0, 80, 5.5, 0.004, 0.07, 2.5),
+(6, 'Плазматрон', 90, 0.12, 2.2, 95, 4.5, 0.006, 0.08, 3.5),
+(7, 'Ионный удар', 75, 0.18, 1.8, 110, 3.5, 0.009, 0.04, 4);
+
+-- Insert players data (5 records)
+INSERT INTO players (id, username, created_at) VALUES
+(101, 'SpaceExplorer', CURRENT_TIMESTAMP - INTERVAL '10 days'),
+(102, 'GalacticHero', CURRENT_TIMESTAMP - INTERVAL '7 days'),
+(103, 'StarCommander', CURRENT_TIMESTAMP - INTERVAL '5 days'),
+(104, 'CosmicPilot', CURRENT_TIMESTAMP - INTERVAL '3 days'),
+(105, 'NebulaWarrior', CURRENT_TIMESTAMP - INTERVAL '1 day');
+
+-- Insert players_hulls data (5 records)
+INSERT INTO players_hulls (id, player_id, hull_id, current_level, is_equipped) VALUES
+(1, 101, 1, 5, TRUE),
+(2, 102, 2, 3, TRUE),
+(3, 103, 3, 7, TRUE),
+(4, 104, 4, 2, TRUE),
+(5, 105, 5, 10, TRUE);
+
+-- Insert players_guns data (5 records)
+INSERT INTO players_guns (id, player_id, gun_id, current_level, is_equipped) VALUES
+(1, 101, 1, 10, TRUE),
+(2, 102, 2, 7, TRUE),
+(3, 103, 3, 5, TRUE),
+(4, 104, 4, 12, TRUE),
+(5, 105, 5, 8, TRUE);
+
+-- Insert ships data (5 records)
+INSERT INTO ships (id, player_id, player_hull_id, player_gun_id, health, shields) VALUES
+(1, 101, 1, 1, 500, 625),
+(2, 102, 2, 2, 395, 510),
+(3, 103, 3, 3, 675, 810),
+(4, 104, 4, 4, 450, 606),
+(5, 105, 5, 5, 550, 700);
+
+-- Insert arena_fights data (5 records)
+INSERT INTO arena_fights (id, player1_id, player2_id, result) VALUES
+(1, 101, 102, 'win1'),
+(2, 102, 103, 'win2'),
+(3, 103, 104, 'draw'),
+(4, 104, 105, 'win1'),
+(5, 105, 101, 'win2');
+
+-- Insert player_resources data (5 records)
+INSERT INTO player_resources (id, player_id, metals, crystalls, gas) VALUES
+(1, 101, 1000, 500, 200),
+(2, 102, 750, 300, 150),
+(3, 103, 1200, 600, 250),
+(4, 104, 850, 400, 180),
+(5, 105, 1500, 750, 300);
